@@ -7,11 +7,6 @@
 // TODO revise max blocks per chunk
 // TODO remove "Dict" column from outout if no dictionary file found
 // TODO do not give warning if no default dictionary found without specifying dictionary explicitly
-// TODO bugfix:
-// go run ff-16-orig.go C:\Windows\explorer.exe -cpf 200
-// 00539800 00006B00 00 +(2) 00    |..| 107   39 -
-// 00540308 00004EF8 -                -  79   14 -
-// -------^---what is the +8?
 package main
 
 import (
@@ -23,7 +18,7 @@ import (
 )
 
 // Last update instead of version
-const LastUpdate = "27-Aug-2024"
+const LastUpdate = "04-Dec-2025"
 
 // Block size is fixed to 256 bytes
 const BlockSize = 256
@@ -436,15 +431,8 @@ func main() {
 				}
 				hitFreq = strconv.Itoa(top)
 
-				// TODO review bugfix, add testfile for this
-				// go run ff-16-orig.go c:\Windows\notepad.exe -cpf 50
-				// Before:
-				//  00055C00 00001C00 00 00         |..|  28   19 Zeroes
-				//  00056400 00000800 00 00         |..|   8    8 Zeroes
-				// After:
-				//  00055C00 00001C00 00 00         |..|  28   19 Zeroes
-				//  00057800 00000800 00 00         |..|   8    8 Zeroes
-				offset := (fileOffs + BlockSize) - actualChunkSize
+				// Offset will always be multiple of "Size"
+				offset := (fileOffs + bytesRead) - actualChunkSize
 
 				if firstChunk && lastChunk {
 					offset = 0
