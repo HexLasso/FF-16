@@ -5,6 +5,13 @@
 // TODO revie Freq threashold
 // TODO revise max gaps
 // TODO revise max blocks per chunk
+// TODO remove "Dict" column from outout if no dictionary file found
+// TODO do not give warning if no default dictionary found without specifying dictionary explicitly
+// TODO bugfix:
+// go run ff-16-orig.go C:\Windows\explorer.exe -cpf 200
+// 00539800 00006B00 00 +(2) 00    |..| 107   39 -
+// 00540308 00004EF8 -                -  79   14 -
+// -------^---what is the +8?
 package main
 
 import (
@@ -16,7 +23,7 @@ import (
 )
 
 // Last update instead of version
-const LastUpdate = "11-Jul-2023"
+const LastUpdate = "27-Aug-2024"
 
 // Block size is fixed to 256 bytes
 const BlockSize = 256
@@ -274,6 +281,7 @@ func main() {
 			chunkPerFile = 0
 			fmt.Printf("WARNING: Chunks per file parameter is too big considering the file size. You cannot split the file to chunks less than 256 byte\n")
 		} else {
+			// TODO confirm if it's minimum chunk per file, if so document
 			chunkSize = ((inFileSize / chunkPerFile) / BlockSize) * BlockSize
 			if chunkSize == 0 {
 				// The whole file will be one chunk
@@ -328,6 +336,7 @@ func main() {
 			}
 		}
 		// If there are multiple blocks with the same hits choose deterministically
+		// NOTE: it'd be possible to use a preference list on the expense of performance
 		for k, v := range blockFreqTable {
 			if v.Hits == blockFreqTable[topKey].Hits {
 				if topKey > k {
@@ -398,6 +407,7 @@ func main() {
 					}
 				}
 				// If there are multiple blocks with the same hits choose deterministically
+				// NOTE: it'd be possible to use a preference list on the expense of performance
 				for k, v := range chunkFreqTable {
 					if v.Hits == chunkFreqTable[topKey].Hits {
 						if topKey > k {
@@ -426,7 +436,15 @@ func main() {
 				}
 				hitFreq = strconv.Itoa(top)
 
-				offset := (fileOffs + BlockSize) - chunkSize
+				// TODO review bugfix, add testfile for this
+				// go run ff-16-orig.go c:\Windows\notepad.exe -cpf 50
+				// Before:
+				//  00055C00 00001C00 00 00         |..|  28   19 Zeroes
+				//  00056400 00000800 00 00         |..|   8    8 Zeroes
+				// After:
+				//  00055C00 00001C00 00 00         |..|  28   19 Zeroes
+				//  00057800 00000800 00 00         |..|   8    8 Zeroes
+				offset := (fileOffs + BlockSize) - actualChunkSize
 
 				if firstChunk && lastChunk {
 					offset = 0
