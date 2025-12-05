@@ -1,3 +1,6 @@
+// FF-16, stands for Find Frequent 16-bit, searches for frequent 16-bit patterns in a given file
+//
+// The latest version can be accessed at https://github.com/HexLasso/FF-16
 package main
 
 import (
@@ -8,10 +11,10 @@ import (
 	"strings"
 )
 
-// Last update instead of version
+// Last update
 const LastUpdate = "04-Dec-2025"
 
-// Block size is fixed to 256 bytes
+// Block size is 256 bytes
 const BlockSize = 256
 
 // Default values for cmd parameters
@@ -83,7 +86,7 @@ func Help() {
 }
 
 func main() {
-	// At least one parameter (i.e. filename) is mandatory
+	// At least one parameter (i.e. filename) is required
 	if len(os.Args) < 2 {
 		Help()
 		return
@@ -166,7 +169,6 @@ func main() {
 				i++
 			}
 		} else {
-			// Target filename is not prefixed with "-"
 			if fileName == "" {
 				fileName = os.Args[i]
 			} else {
@@ -201,7 +203,7 @@ func main() {
 		}
 	}
 
-	// Input file
+	// Opening the input file
 	inFile, err := os.Open(fileName)
 	if err != nil {
 		fmt.Printf("ERROR: Unable to access \"%s\".\n\n", fileName)
@@ -222,7 +224,7 @@ func main() {
 		return
 	}
 
-	// Dictionary file (i.e. CSV file)
+	// Reading the dictionary (i.e. csv file)
 	csvRecordCount := 0
 	var csvRecords [][]string
 	csvFileBuf, err := os.ReadFile(dictFileName)
@@ -256,22 +258,24 @@ func main() {
 		GapArr[i] = i
 	}
 
-	// Init chunk size
+	// Calculate chunk size from bpc
 	chunkSize := blocksPerChunk * BlockSize
 
-	// Calculate chunksize for chunks-per-file parameter
 	if chunkPerFile != 0 {
+		// Cpf is set
 		if inFileSize/chunkPerFile < BlockSize {
-			// Chunks per file parameter is too big
+			// Cpf is too large
 			chunkPerFile = 0
 			fmt.Printf("WARNING: Chunks per file parameter is too big considering the file size. You cannot split the file to chunks less than 256 byte\n")
 		} else {
-			// TODO confirm if it's minimum chunk per file, if so document
+			// Recalculate chunk size from cpf
 			chunkSize = ((inFileSize / chunkPerFile) / BlockSize) * BlockSize
 			if chunkSize == 0 {
-				// The whole file will be one chunk
+				// Fixup chunk size as per one chunk per file
 				chunkSize = (inFileSize / 256) * 256
 			}
+
+			// Calculate bpc
 			blocksPerChunk = chunkSize / 256
 
 			if IsOutOfRangeValue(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
@@ -282,9 +286,10 @@ func main() {
 		}
 	}
 
-	// Set chunk or block mode for printing
+	// Set block mode for printing
 	blockMode := true
 	if chunkSize != BlockSize {
+		// Set chunk mode for printing
 		blockMode = false
 	}
 
@@ -292,7 +297,6 @@ func main() {
 	fmt.Printf("Offset   Size     Pattern      Ascii Bpc Freq Dict\n")
 
 	actualChunkSize := 0
-	// Read block of data in each iteration
 	for fileOffs := 0; fileOffs < inFileSize; fileOffs += BlockSize {
 		// Read block of data
 		bytesRead, err := inFile.Read(buffer)
@@ -320,8 +324,8 @@ func main() {
 				topKey = k
 			}
 		}
-		// If there are multiple blocks with the same hits choose deterministically
-		// NOTE: it'd be possible to use a preference list on the expense of performance
+
+		// If there are multiple patterns with the same hits, choose deterministically
 		for k, v := range blockFreqTable {
 			if v.Hits == blockFreqTable[topKey].Hits {
 				if topKey > k {
@@ -335,7 +339,7 @@ func main() {
 		hitFreq := "-"
 		dict := "-"
 
-		// Threshold applies for blocks only
+		// Threshold applies to blocks only
 		if blockFreqTable[topKey].Hits >= threshold {
 			if blockFreqTable[topKey].Gap == 0 {
 				hex = fmt.Sprintf("%02X %02X", blockFreqTable[topKey].Byte1, blockFreqTable[topKey].Byte2)
@@ -355,7 +359,7 @@ func main() {
 			hitFreq = strconv.Itoa(blockFreqTable[topKey].Hits)
 		}
 
-		// Update pattern frequency table for the chunk with the top pattern from the block
+		// Update pattern frequency table for the chunk with the top pattern of the block
 		hits := chunkFreqTable[hex].Hits + 1
 
 		chunkFreqTable[hex] = PatternInfo{
@@ -380,7 +384,9 @@ func main() {
 				lastChunk = true
 			}
 
-			// Print Chunk info when all the Blocks in the Chunk processed OR if it's the last Chunk in the file
+			// Print chunk info
+			//   when all the blocks in the chunk are processed OR
+			//   if this is the last chunk
 			if ((fileOffs != 0) && ((fileOffs+BlockSize)%chunkSize == 0)) || lastChunk {
 				// Get the top block of the chunk
 				top := 0
@@ -391,8 +397,7 @@ func main() {
 						topKey = k
 					}
 				}
-				// If there are multiple blocks with the same hits choose deterministically
-				// NOTE: it'd be possible to use a preference list on the expense of performance
+				// If there are multiple blocks with the same hits, choose deterministically
 				for k, v := range chunkFreqTable {
 					if v.Hits == chunkFreqTable[topKey].Hits {
 						if topKey > k {
@@ -421,7 +426,7 @@ func main() {
 				}
 				hitFreq = strconv.Itoa(top)
 
-				// Offset will always be multiple of "Size"
+				// Offset is always the multiple of chunk size if cpf>1
 				offset := (fileOffs + bytesRead) - actualChunkSize
 
 				if firstChunk && lastChunk {
@@ -429,8 +434,9 @@ func main() {
 				}
 
 				actualBpc := actualChunkSize / BlockSize
-				// If the block in the chunk is less than 256 bytes in size, it still counts as a block
+
 				if actualChunkSize%BlockSize != 0 {
+					// The block in the chunk is smaller than 256 bytes, it is still counted as a block
 					actualBpc++
 				}
 
@@ -443,11 +449,12 @@ func main() {
 
 				// Reset actual chunk size
 				actualChunkSize = 0
-			} // if
-		} // else
+			} // if - Print chunk info
+		} // else - Chunk mode
+
 		// Clear block frequency table for the next block
 		for key := range blockFreqTable {
 			delete(blockFreqTable, key)
 		}
-	} // for
+	} // for - Read block of data
 }
