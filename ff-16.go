@@ -1,12 +1,3 @@
-// TODO reword ERRORs/WARNINGs
-// TODO revise if variable names and rename them if needed
-// TODO revise function namings and rename them if needed
-// TODO write test files
-// TODO revie Freq threashold
-// TODO revise max gaps
-// TODO revise max blocks per chunk
-// TODO remove "Dict" column from outout if no dictionary file found
-// TODO do not give warning if no default dictionary found without specifying dictionary explicitly
 package main
 
 import (
@@ -236,7 +227,6 @@ func main() {
 	var csvRecords [][]string
 	csvFileBuf, err := os.ReadFile(dictFileName)
 	if err == nil {
-		// TODO check duplicate entries
 		r := csv.NewReader(strings.NewReader(string(csvFileBuf)))
 		r.Comma = ';'
 		r.Comment = '#'
