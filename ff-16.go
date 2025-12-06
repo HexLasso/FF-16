@@ -48,13 +48,13 @@ type PatternInfo struct {
 	Hits  int  // Counter for the pattern hits
 }
 
-func Check(e error) {
+func PanicIfError(e error) {
 	if e != nil {
 		panic(e)
 	}
 }
 
-func IsOutOfRangeValue(val int, lo int, hi int) bool {
+func IsOutOfRange(val int, lo int, hi int) bool {
 	if (val < lo) || (val > hi) {
 		return true
 	}
@@ -122,7 +122,7 @@ func main() {
 				if err != nil {
 					badValueFormat = true
 				}
-				if IsOutOfRangeValue(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
+				if IsOutOfRange(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
 					outOfRangeValue = true
 				}
 				i++
@@ -136,7 +136,7 @@ func main() {
 				if err != nil {
 					badValueFormat = true
 				}
-				if IsOutOfRangeValue(chunkPerFile, ChunksPerFileLo, ChunksPerFileHi) {
+				if IsOutOfRange(chunkPerFile, ChunksPerFileLo, ChunksPerFileHi) {
 					outOfRangeValue = true
 				}
 				i++
@@ -150,7 +150,7 @@ func main() {
 				if err != nil {
 					badValueFormat = true
 				}
-				if IsOutOfRangeValue(gap, MaxGapLo, MaxGapHi) {
+				if IsOutOfRange(gap, MaxGapLo, MaxGapHi) {
 					outOfRangeValue = true
 				}
 				i++
@@ -163,7 +163,7 @@ func main() {
 				if err != nil {
 					badValueFormat = true
 				}
-				if IsOutOfRangeValue(threshold, ThresholdLo, ThresholdHi) {
+				if IsOutOfRange(threshold, ThresholdLo, ThresholdHi) {
 					outOfRangeValue = true
 				}
 				i++
@@ -211,14 +211,14 @@ func main() {
 		return
 	}
 	fi, err := inFile.Stat()
-	Check(err)
+	PanicIfError(err)
 	if fi.IsDir() {
 		fmt.Printf("ERROR: The supplied parameter \"%s\" is a directory. You need to supply a file.\n\n", fileName)
 		Help()
 		return
 	}
 	inFileSize := int(fi.Size())
-	if IsOutOfRangeValue(inFileSize, FileSizeLo, FileSizeHi) {
+	if IsOutOfRange(inFileSize, FileSizeLo, FileSizeHi) {
 		fmt.Printf("ERROR: The file is too large in size. The file size should be up to %dMB.\n\n", FileSizeHi/1024/1024)
 		Help()
 		return
@@ -233,7 +233,7 @@ func main() {
 		r.Comma = ';'
 		r.Comment = '#'
 		csvRecords, err = r.ReadAll()
-		Check(err)
+		PanicIfError(err)
 		csvRecordCount = len(csvRecords)
 		// Verification
 		if csvRecordCount > MaxDictRows {
@@ -278,7 +278,7 @@ func main() {
 			// Calculate bpc
 			blocksPerChunk = chunkSize / 256
 
-			if IsOutOfRangeValue(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
+			if IsOutOfRange(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
 				fmt.Printf("ERROR: The calculated BPC is too big\n\n")
 				Help()
 				return
@@ -300,7 +300,7 @@ func main() {
 	for fileOffs := 0; fileOffs < inFileSize; fileOffs += BlockSize {
 		// Read block of data
 		bytesRead, err := inFile.Read(buffer)
-		Check(err)
+		PanicIfError(err)
 
 		// Build pattern frequency table for the block
 		for skipIdx := 0; skipIdx <= gap; skipIdx++ {
