@@ -34,18 +34,18 @@ const ThresholdLo = 1
 const ThresholdHi = 255
 const FileSizeLo = 0
 const FileSizeHi = BlocksPerChunkHi * ChunksPerFileHi
-const DictColumnWidth = 2
+const DictColumnCount = 2
 const MaxDictRows = 65536
 
 // Worst case array size for varying gaps
 // +1 for gap=0
-var GapArr [MaxGapHi + 1]int
+var GapTable [MaxGapHi + 1]int
 
 type PatternInfo struct {
-	Byte1 byte // First byte in the pattern
-	Byte2 byte // Second byte in the pattern
-	Gap   int  // Gap (in bytes) between the fist and the second bytes
-	Hits  int  // Counter for the pattern hits
+	First  byte // First byte of the pattern
+	Second byte // Second byte of the pattern
+	Gap    int  // Number of bytes between First and Second
+	Hits   int  // Count of matches
 }
 
 func PanicIfError(e error) {
@@ -61,16 +61,16 @@ func IsOutOfRange(val int, lo int, hi int) bool {
 	return false
 }
 
-func ToPrintable(byte1 byte, byte2 byte) string {
-	var b1 byte = '.'
-	var b2 byte = '.'
-	if (byte1 >= 0x20) && (byte1 <= 0x7E) {
-		b1 = byte1
+func ToPrintable(first byte, second byte) string {
+	var firstPrintable byte = '.'
+	var secondPrintable byte = '.'
+	if (first >= 0x20) && (first <= 0x7E) {
+		firstPrintable = first
 	}
-	if (byte2 >= 0x20) && (byte2 <= 0x7E) {
-		b2 = byte2
+	if (second >= 0x20) && (second <= 0x7E) {
+		secondPrintable = second
 	}
-	return fmt.Sprintf("%c%c", b1, b2)
+	return fmt.Sprintf("%c%c", firstPrintable, secondPrintable)
 }
 
 func Help() {
@@ -96,7 +96,7 @@ func main() {
 	fileName := ""
 	dictFileName := DefDictFileName
 	blocksPerChunk := DefBlocksPerChunk
-	chunkPerFile := 0
+	chunksPerFile := 0
 	gap := DefMaxGap
 	threshold := DefThreshold
 	bpcSet := false
@@ -132,11 +132,11 @@ func main() {
 			if len(os.Args) <= i+1 {
 				missingValue = true
 			} else {
-				chunkPerFile, err = strconv.Atoi(os.Args[i+1])
+				chunksPerFile, err = strconv.Atoi(os.Args[i+1])
 				if err != nil {
 					badValueFormat = true
 				}
-				if IsOutOfRange(chunkPerFile, ChunksPerFileLo, ChunksPerFileHi) {
+				if IsOutOfRange(chunksPerFile, ChunksPerFileLo, ChunksPerFileHi) {
 					outOfRangeValue = true
 				}
 				i++
@@ -225,23 +225,23 @@ func main() {
 	}
 
 	// Reading the dictionary (i.e. csv file)
-	csvRecordCount := 0
-	var csvRecords [][]string
-	csvFileBuf, err := os.ReadFile(dictFileName)
+	dictRecordCount := 0
+	var dictRecords [][]string
+	csvFileContent, err := os.ReadFile(dictFileName)
 	if err == nil {
-		r := csv.NewReader(strings.NewReader(string(csvFileBuf)))
+		r := csv.NewReader(strings.NewReader(string(csvFileContent)))
 		r.Comma = ';'
 		r.Comment = '#'
-		csvRecords, err = r.ReadAll()
+		dictRecords, err = r.ReadAll()
 		PanicIfError(err)
-		csvRecordCount = len(csvRecords)
+		dictRecordCount = len(dictRecords)
 		// Verification
-		if csvRecordCount > MaxDictRows {
+		if dictRecordCount > MaxDictRows {
 			fmt.Printf("ERROR: Too many rows in dictionary.\n\n")
 			Help()
 			return
 		}
-		if len(csvRecords[0]) != DictColumnWidth {
+		if len(dictRecords[0]) != DictColumnCount {
 			fmt.Printf("ERROR: Column width must be 2.\n\n")
 			Help()
 			return
@@ -251,32 +251,32 @@ func main() {
 	}
 
 	// Init
-	buffer := make([]byte, BlockSize)
+	blockBuf := make([]byte, BlockSize)
 	blockFreqTable := make(map[string]PatternInfo)
 	chunkFreqTable := make(map[string]PatternInfo)
 	for i := 0; i <= gap; i++ {
-		GapArr[i] = i
+		GapTable[i] = i
 	}
 
 	// Calculate chunk size from bpc
 	chunkSize := blocksPerChunk * BlockSize
 
-	if chunkPerFile != 0 {
+	if chunksPerFile != 0 {
 		// Cpf is set
-		if inFileSize/chunkPerFile < BlockSize {
+		if inFileSize/chunksPerFile < BlockSize {
 			// Cpf is too large
-			chunkPerFile = 0
+			chunksPerFile = 0
 			fmt.Printf("WARNING: Chunks per file parameter is too big considering the file size. You cannot split the file to chunks less than 256 byte\n")
 		} else {
 			// Recalculate chunk size from cpf
-			chunkSize = ((inFileSize / chunkPerFile) / BlockSize) * BlockSize
+			chunkSize = ((inFileSize / chunksPerFile) / BlockSize) * BlockSize
 			if chunkSize == 0 {
 				// Fixup chunk size as per one chunk per file
-				chunkSize = (inFileSize / 256) * 256
+				chunkSize = (inFileSize / BlockSize) * BlockSize
 			}
 
 			// Calculate bpc
-			blocksPerChunk = chunkSize / 256
+			blocksPerChunk = chunkSize / BlockSize
 
 			if IsOutOfRange(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
 				fmt.Printf("ERROR: The calculated BPC is too big\n\n")
@@ -299,28 +299,28 @@ func main() {
 	actualChunkSize := 0
 	for fileOffs := 0; fileOffs < inFileSize; fileOffs += BlockSize {
 		// Read block of data
-		bytesRead, err := inFile.Read(buffer)
+		bytesRead, err := inFile.Read(blockBuf)
 		PanicIfError(err)
 
 		// Build pattern frequency table for the block
-		for skipIdx := 0; skipIdx <= gap; skipIdx++ {
-			for bufIdx := 0; bufIdx < bytesRead-1-GapArr[skipIdx]; bufIdx++ {
-				key := fmt.Sprintf("%02x +(%d) %02x \n", buffer[bufIdx], GapArr[skipIdx], buffer[bufIdx+GapArr[skipIdx]+1])
+		for gapIdx := 0; gapIdx <= gap; gapIdx++ {
+			for bufIdx := 0; bufIdx < bytesRead-1-GapTable[gapIdx]; bufIdx++ {
+				key := fmt.Sprintf("%02x +(%d) %02x \n", blockBuf[bufIdx], GapTable[gapIdx], blockBuf[bufIdx+GapTable[gapIdx]+1])
 				hits := blockFreqTable[key].Hits + 1
 				blockFreqTable[key] = PatternInfo{
-					Byte1: buffer[bufIdx],
-					Byte2: buffer[bufIdx+GapArr[skipIdx]+1],
-					Gap:   GapArr[skipIdx],
-					Hits:  hits}
+					First:  blockBuf[bufIdx],
+					Second: blockBuf[bufIdx+GapTable[gapIdx]+1],
+					Gap:    GapTable[gapIdx],
+					Hits:   hits}
 			}
 		}
 
 		// Get the top pattern of the block
-		top := 0
+		topHits := 0
 		topKey := ""
 		for k, v := range blockFreqTable {
-			if v.Hits > top {
-				top = v.Hits
+			if v.Hits > topHits {
+				topHits = v.Hits
 				topKey = k
 			}
 		}
@@ -342,17 +342,17 @@ func main() {
 		// Threshold applies to blocks only
 		if blockFreqTable[topKey].Hits >= threshold {
 			if blockFreqTable[topKey].Gap == 0 {
-				hex = fmt.Sprintf("%02X %02X", blockFreqTable[topKey].Byte1, blockFreqTable[topKey].Byte2)
+				hex = fmt.Sprintf("%02X %02X", blockFreqTable[topKey].First, blockFreqTable[topKey].Second)
 			} else {
-				hex = fmt.Sprintf("%02X +(%d) %02X", blockFreqTable[topKey].Byte1, blockFreqTable[topKey].Gap, blockFreqTable[topKey].Byte2)
+				hex = fmt.Sprintf("%02X +(%d) %02X", blockFreqTable[topKey].First, blockFreqTable[topKey].Gap, blockFreqTable[topKey].Second)
 			}
 
-			printable = ToPrintable(blockFreqTable[topKey].Byte1, blockFreqTable[topKey].Byte2)
+			printable = ToPrintable(blockFreqTable[topKey].First, blockFreqTable[topKey].Second)
 			printable = "|" + printable + "|"
 
-			for i := 0; i < csvRecordCount; i++ {
-				if strings.EqualFold((csvRecords[i])[0], hex) {
-					dict = strings.Trim((csvRecords[i])[1], " ")
+			for i := 0; i < dictRecordCount; i++ {
+				if strings.EqualFold((dictRecords[i])[0], hex) {
+					dict = strings.Trim((dictRecords[i])[1], " ")
 				}
 			}
 
@@ -363,10 +363,10 @@ func main() {
 		hits := chunkFreqTable[hex].Hits + 1
 
 		chunkFreqTable[hex] = PatternInfo{
-			Byte1: blockFreqTable[topKey].Byte1,
-			Byte2: blockFreqTable[topKey].Byte2,
-			Gap:   blockFreqTable[topKey].Gap,
-			Hits:  hits}
+			First:  blockFreqTable[topKey].First,
+			Second: blockFreqTable[topKey].Second,
+			Gap:    blockFreqTable[topKey].Gap,
+			Hits:   hits}
 
 		if blockMode {
 			// Block mode
@@ -389,11 +389,11 @@ func main() {
 			//   if this is the last chunk
 			if ((fileOffs != 0) && ((fileOffs+BlockSize)%chunkSize == 0)) || lastChunk {
 				// Get the top block of the chunk
-				top := 0
+				topHits := 0
 				topKey := ""
 				for k, v := range chunkFreqTable {
-					if v.Hits > top {
-						top = v.Hits
+					if v.Hits > topHits {
+						topHits = v.Hits
 						topKey = k
 					}
 				}
@@ -410,21 +410,21 @@ func main() {
 				hex = "-"
 				if topKey != "-" {
 					if chunkFreqTable[topKey].Gap == 0 {
-						hex = fmt.Sprintf("%02X %02X", chunkFreqTable[topKey].Byte1, chunkFreqTable[topKey].Byte2)
+						hex = fmt.Sprintf("%02X %02X", chunkFreqTable[topKey].First, chunkFreqTable[topKey].Second)
 					} else {
-						hex = fmt.Sprintf("%02X +(%d) %02X", chunkFreqTable[topKey].Byte1, chunkFreqTable[topKey].Gap, chunkFreqTable[topKey].Byte2)
+						hex = fmt.Sprintf("%02X +(%d) %02X", chunkFreqTable[topKey].First, chunkFreqTable[topKey].Gap, chunkFreqTable[topKey].Second)
 					}
 
-					printable = ToPrintable(chunkFreqTable[topKey].Byte1, chunkFreqTable[topKey].Byte2)
+					printable = ToPrintable(chunkFreqTable[topKey].First, chunkFreqTable[topKey].Second)
 					printable = "|" + printable + "|"
 				}
 				dict = "-"
-				for i := 0; i < csvRecordCount; i++ {
-					if strings.EqualFold((csvRecords[i])[0], topKey) {
-						dict = strings.Trim((csvRecords[i])[1], " ")
+				for i := 0; i < dictRecordCount; i++ {
+					if strings.EqualFold((dictRecords[i])[0], topKey) {
+						dict = strings.Trim((dictRecords[i])[1], " ")
 					}
 				}
-				hitFreq = strconv.Itoa(top)
+				hitFreq = strconv.Itoa(topHits)
 
 				// Offset is always the multiple of chunk size if cpf>1
 				offset := (fileOffs + bytesRead) - actualChunkSize
