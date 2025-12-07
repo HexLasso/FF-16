@@ -37,6 +37,9 @@ const FileSizeHi = BlocksPerChunkHi * ChunksPerFileHi
 const DictColumnCount = 2
 const MaxDictRows = 65536
 
+// Help hint for errors
+const HelpHint = "Run \"ff-16\" without parameters for help."
+
 // Worst case array size for varying gaps
 // +1 for gap=0
 var GapTable [MaxGapHi + 1]int
@@ -102,7 +105,7 @@ func main() {
 	bpcSet := false
 	cpfSet := false
 	missingValue := false
-	badValueFormat := false
+	invalidValue := false
 	outOfRangeValue := false
 	var err error = nil
 	for i := 1; i < len(os.Args); i++ {
@@ -120,7 +123,7 @@ func main() {
 			} else {
 				blocksPerChunk, err = strconv.Atoi(os.Args[i+1])
 				if err != nil {
-					badValueFormat = true
+					invalidValue = true
 				}
 				if IsOutOfRange(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
 					outOfRangeValue = true
@@ -134,7 +137,7 @@ func main() {
 			} else {
 				chunksPerFile, err = strconv.Atoi(os.Args[i+1])
 				if err != nil {
-					badValueFormat = true
+					invalidValue = true
 				}
 				if IsOutOfRange(chunksPerFile, ChunksPerFileLo, ChunksPerFileHi) {
 					outOfRangeValue = true
@@ -148,7 +151,7 @@ func main() {
 			} else {
 				gap, err = strconv.Atoi(os.Args[i+1])
 				if err != nil {
-					badValueFormat = true
+					invalidValue = true
 				}
 				if IsOutOfRange(gap, MaxGapLo, MaxGapHi) {
 					outOfRangeValue = true
@@ -161,7 +164,7 @@ func main() {
 			} else {
 				threshold, err = strconv.Atoi(os.Args[i+1])
 				if err != nil {
-					badValueFormat = true
+					invalidValue = true
 				}
 				if IsOutOfRange(threshold, ThresholdLo, ThresholdHi) {
 					outOfRangeValue = true
@@ -172,33 +175,33 @@ func main() {
 			if fileName == "" {
 				fileName = os.Args[i]
 			} else {
-				fmt.Printf("ERROR: Unknown parameter: \"%s\".\n\n", os.Args[i])
-				Help()
+				fmt.Printf("ERROR: Unknown parameter \"%s\".\n", os.Args[i])
+				fmt.Printf("%s\n", HelpHint)
 				return
 			}
 		}
 
 		if missingValue {
-			fmt.Printf("ERROR: Missing value for: \"%s\".\n\n", os.Args[i])
-			Help()
+			fmt.Printf("ERROR: Missing value for \"%s\".\n", os.Args[i])
+			fmt.Printf("%s\n", HelpHint)
 			return
 		}
 
-		if badValueFormat {
-			fmt.Printf("ERROR: The value: \"%s\" has a bad format in: \"%s\".\n\n", os.Args[i], os.Args[i-1])
-			Help()
+		if invalidValue {
+			fmt.Printf("ERROR: The value \"%s\" is invalid for \"%s\".\n", os.Args[i], os.Args[i-1])
+			fmt.Printf("%s\n", HelpHint)
 			return
 		}
 
 		if outOfRangeValue {
-			fmt.Printf("ERROR: The value: \"%s\" is out of range for: \"%s\".\n\n", os.Args[i], os.Args[i-1])
-			Help()
+			fmt.Printf("ERROR: The value \"%s\" is out of range for \"%s\".\n", os.Args[i], os.Args[i-1])
+			fmt.Printf("%s\n", HelpHint)
 			return
 		}
 
 		if bpcSet && cpfSet {
-			fmt.Printf("ERROR: The parameters \"-bpc\" and \"-cpf\" are mutually exclusive. Use only one of them.\n\n")
-			Help()
+			fmt.Printf("ERROR: The parameters \"-bpc\" and \"-cpf\" are mutually exclusive and cannot be used together.\n")
+			fmt.Printf("%s\n", HelpHint)
 			return
 		}
 	}
@@ -206,21 +209,18 @@ func main() {
 	// Opening the input file
 	inFile, err := os.Open(fileName)
 	if err != nil {
-		fmt.Printf("ERROR: Unable to access \"%s\".\n\n", fileName)
-		Help()
+		fmt.Printf("ERROR: File not found \"%s\".\n", fileName)
 		return
 	}
 	fi, err := inFile.Stat()
 	PanicIfError(err)
 	if fi.IsDir() {
-		fmt.Printf("ERROR: The supplied parameter \"%s\" is a directory. You need to supply a file.\n\n", fileName)
-		Help()
+		fmt.Printf("ERROR: The supplied parameter \"%s\" is a directory, but a file was expected.\n", fileName)
 		return
 	}
 	inFileSize := int(fi.Size())
 	if IsOutOfRange(inFileSize, FileSizeLo, FileSizeHi) {
-		fmt.Printf("ERROR: The file is too large in size. The file size should be up to %dMB.\n\n", FileSizeHi/1024/1024)
-		Help()
+		fmt.Printf("ERROR: File too large. Maximum allowed size is %d MB.\n", FileSizeHi/1024/1024)
 		return
 	}
 
@@ -237,17 +237,16 @@ func main() {
 		dictRecordCount = len(dictRecords)
 		// Verification
 		if dictRecordCount > MaxDictRows {
-			fmt.Printf("ERROR: Too many rows in dictionary.\n\n")
-			Help()
+			fmt.Printf("ERROR: Dictionary file \"%s\" contains %d rows, but the maximum allowed is %d.\n", dictFileName, dictRecordCount, MaxDictRows)
 			return
 		}
-		if len(dictRecords[0]) != DictColumnCount {
-			fmt.Printf("ERROR: Column width must be 2.\n\n")
-			Help()
+		columnCount := len(dictRecords[0])
+		if columnCount != DictColumnCount {
+			fmt.Printf("ERROR: Dictionary file \"%s\" contains %d columns, but it must contain %d columns.\n", dictFileName, columnCount, DictColumnCount)
 			return
 		}
 	} else {
-		fmt.Printf("WARNING: File not found: %s\n", dictFileName)
+		fmt.Printf("WARNING: Dictionary file not found \"%s\".\n", dictFileName)
 	}
 
 	// Init
@@ -266,7 +265,7 @@ func main() {
 		if inFileSize/chunksPerFile < BlockSize {
 			// Cpf is too large
 			chunksPerFile = 0
-			fmt.Printf("WARNING: Chunks per file parameter is too big considering the file size. You cannot split the file to chunks less than 256 byte\n")
+			fmt.Printf("WARNING: The \"-cpf\" value is too large for this file. The file cannot be split into chunks smaller than 256 bytes. The \"-cpf\" parameter will be ignored, continuing with \"-bpc=1\" instead.\n")
 		} else {
 			// Recalculate chunk size from cpf
 			chunkSize = ((inFileSize / chunksPerFile) / BlockSize) * BlockSize
@@ -279,8 +278,7 @@ func main() {
 			blocksPerChunk = chunkSize / BlockSize
 
 			if IsOutOfRange(blocksPerChunk, BlocksPerChunkLo, BlocksPerChunkHi) {
-				fmt.Printf("ERROR: The calculated BPC is too big\n\n")
-				Help()
+				fmt.Printf("ERROR: The calculated BPC exceeds the maximum allowed value. Try increasing the \"-cpf\" value.\n")
 				return
 			}
 		}
@@ -370,7 +368,7 @@ func main() {
 
 		if blockMode {
 			// Block mode
-			fmt.Printf("%08X %08x %-12s %5s %3d %4s %s\n", fileOffs, bytesRead, hex, printable, blocksPerChunk, hitFreq, dict)
+			fmt.Printf("%08X %08X %-12s %5s %3d %4s %s\n", fileOffs, bytesRead, hex, printable, blocksPerChunk, hitFreq, dict)
 		} else {
 			// Chunk mode
 			actualChunkSize += bytesRead
