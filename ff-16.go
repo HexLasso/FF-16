@@ -284,12 +284,8 @@ func main() {
 		}
 	}
 
-	// Set block mode for printing
-	blockMode := true
-	if chunkSize != BlockSize {
-		// Set chunk mode for printing
-		blockMode = false
-	}
+	// Set block/chunk mode for printing
+	blockMode := (chunkSize == BlockSize)
 
 	// Print header
 	fmt.Printf("Offset   Size     Pattern      Ascii Bpc Freq Dict\n")
