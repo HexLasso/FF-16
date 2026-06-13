@@ -1,5 +1,19 @@
 # FF-16 (Find Frequent 16-bit)
 
+## Intro
+
+The purpose of FF-16 is to assist in identifying structural redundancies in a given file.
+
+Structural redundancies are more likely to be understood by users than coincidental redundancies.
+
+Understanding structural redundancies can further assist in understanding the layout of the file.
+
+In order to do this, **FF-16 finds frequent 16-bit patterns in all regions of the file.**
+
+Finding 16-bit patterns is computationally manageable on desktops.
+
+Byte-boundary matching can highlight structural redundancies with negligible coincidental redundancies in common data sets.
+
 FF-16 is a CLI tool written in Go.
 
 ## Command line syntax
@@ -28,3 +42,24 @@ ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>]
 | Pattern frequency | The number of occurrences of a given pattern in a block. |
 | Frequency threshold | The boundary to define the statistically significant pattern frequency. |
 | Dictionary | A list of pattern-description pairs in a user-editable CSV file in which the pattern is looked up. |
+
+## File, chunk, block and pattern
+
+A file consist of chunks. A chunk consists of blocks.
+
+```
+([<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>])
+
+() File
+[] Chunk
+<> Block
+```
+
+The structure of a pattern is like this.
+```
+00 +(01) 00
+|    |   |
+|    |   Second byte of pattern
+|    Gap in bytes
+First byte of pattern
+```
