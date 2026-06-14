@@ -1,24 +1,10 @@
 # FF-16 (Find Frequent 16-bit)
 
-## Intro
+## Purpose
 
-The purpose of FF-16 is to assist in identifying local, structural redundancies in a given file.
+FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. To reduce output length while retaining full coverage, results can be aggregated into chunks.
 
-Structural redundancies are more likely to be recognized by users than coincidental redundancies.
-
-Recognizing structural redundancies can further assist in understanding the layout of the file.
-
-In order to do this, **FF-16 finds frequent 16-bit patterns in all regions of the file.**
-
-Finding 16-bit patterns is computationally manageable on desktops.
-
-A 16-bit pattern is more meaningful than an 8-bit pattern. Frequent 16-bit patterns are more likely to be found than 24-bit or longer patterns.
-
-With a 256-byte block size, byte-boundary matching can highlight structural redundancies with negligible coincidental redundancies in common data sets.
-
-FF-16 is a CLI tool written in Go.
-
-## Command line syntax
+## Command line usage
 
 ```
 ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>] [-t <1..255>]
@@ -29,6 +15,37 @@ ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>]
   -cpf <1..65536> Chunks per file  (Default: not specified)
   -g <0..127>     Max gaps         (Default: 31)
   -t <1..255>     Freq threshold   (Default: 5)
+```
+
+If no argument is provided, FF-16 displays the usage (above).
+
+For analysis, the target file is the only parameter that needs specifying, and the analysis will start with default values.
+
+Blocks per chunk (`-bpc`) and Chunks per file (`-cpf`) parameters are mutually exclusive. Use only one. If none is used, the results will be displayed for each block (verbose). Otherwise, the results will be aggregated into chunks (reduced verbosity).
+
+Block per chunk is 1 (`-bpc 1`). Result for each block. Verbose.
+```
+(<Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk>)
+```
+
+Block per chink is not 1 (`-bpc` or `-cpf` is specified). Result for each chunk. Reduced verbosity.
+```
+([<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>])
+
+() File
+[] Chunk
+<> Block
+```
+If Max gap is not specified (`-g`), FF-16 will operate with `-g 31`. It means the search will involve any gaps between 0 and 31 between the first byte of the pattern and the second byte of the pattern. That is to find up to 32 bytes long structures.
+
+This is how a pattern looks like.
+
+```
+00 +(31) 00
+|    |   |
+|    |   Second byte of pattern
+|    Gap in bytes
+First byte of pattern
 ```
 
 ## Terminologies
@@ -44,24 +61,3 @@ ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>]
 | Pattern frequency | The number of occurrences of a given pattern in a block. |
 | Frequency threshold | The boundary to define the statistically significant pattern frequency. |
 | Dictionary | A list of pattern-description pairs in a user-editable CSV file in which the pattern is looked up. |
-
-## File, chunk, block and pattern
-
-A file consist of chunks. A chunk consists of blocks.
-
-```
-([<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>])
-
-() File
-[] Chunk
-<> Block
-```
-
-The structure of a pattern is like this.
-```
-00 +(01) 00
-|    |   |
-|    |   Second byte of pattern
-|    Gap in bytes
-First byte of pattern
-```
