@@ -1,8 +1,8 @@
 # FF-16 (Find Frequent 16-bit)
 
-## What FF-16 does?
+## What does FF-16 do?
 
-FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. It can aggregate results into chunks to reduce output length while retaining full coverage. 
+FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. It can aggregate results into chunks to reduce output length while retaining full coverage.
 
 ## Command line usage
 
@@ -56,6 +56,24 @@ Using a dictionary (`-d`) can be useful if the user wants to display a text next
 00 +(3) 00; DWORD
 CC CC; INT 3
 ```
+
+## Understanding the results
+
+### Block
+bpc=1
+
+### Chunk
+bpc>1
+
+## Examples
+
+### Simple
+
+### Adjusted BPC
+
+### Adjusted CPF
+
+### Dictionary usage
 
 ## Terminologies
 
