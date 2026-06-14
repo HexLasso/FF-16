@@ -28,7 +28,7 @@ Block per chunk is 1 (`-bpc 1`). Result for each block. Verbose.
 (<Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk>)
 ```
 
-Block per chink is not 1 (`-bpc` or `-cpf` is specified). Result for each chunk. Reduced verbosity.
+Block per chunk is not 1 (`-bpc` or `-cpf` is specified). Result for each chunk. Reduced verbosity.
 ```
 ([<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>])
 
@@ -46,6 +46,15 @@ This is how a pattern looks like.
 |    |   Second byte of pattern
 |    Gap in bytes
 First byte of pattern
+```
+
+Frequency threshold means if the pattern occurs at least that many times as specified, it's considered statistically significant and will be ranked against the other patterns. What is the point of this? For example, if a given block is a high-entropy block, it controls the coincidental matches, i.e., the noise. But if the user wants to see coincidental redundancy in high-entropy data, they may lower the threshold. For another example, the user may decide they only want to see very strong signals and increase the threshold.
+
+Using a dictionary (`-d`) can be useful if the user wants to display a text next to the pattern. The dictionary file is a CSV file. Each line defines the pattern and the text to be displayed with semicolon between them. For example:
+```
+00 +(7) 00; QWORD
+00 +(3) 00; DWORD
+CC CC; INT 3
 ```
 
 ## Terminologies
