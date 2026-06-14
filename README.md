@@ -2,17 +2,19 @@
 
 ## Intro
 
-The purpose of FF-16 is to assist in identifying structural redundancies in a given file.
+The purpose of FF-16 is to assist in identifying local, structural redundancies in a given file.
 
-Structural redundancies are more likely to be understood by users than coincidental redundancies.
+Structural redundancies are more likely to be recognized by users than coincidental redundancies.
 
-Understanding structural redundancies can further assist in understanding the layout of the file.
+Recognizing structural redundancies can further assist in understanding the layout of the file.
 
 In order to do this, **FF-16 finds frequent 16-bit patterns in all regions of the file.**
 
 Finding 16-bit patterns is computationally manageable on desktops.
 
-Byte-boundary matching can highlight structural redundancies with negligible coincidental redundancies in common data sets.
+A 16-bit pattern is more meaningful than an 8-bit pattern. Frequent 16-bit patterns are more likely to be found than 24-bit or longer patterns.
+
+With a 256-byte block size, byte-boundary matching can highlight structural redundancies with negligible coincidental redundancies in common data sets.
 
 FF-16 is a CLI tool written in Go.
 
