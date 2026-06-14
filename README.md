@@ -1,8 +1,8 @@
 # FF-16 (Find Frequent 16-bit)
 
-## Purpose
+## What FF-16 does?
 
-FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. To reduce output length while retaining full coverage, results can be aggregated into chunks.
+FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. It can aggregate results into chunks to reduce output length while retaining full coverage. 
 
 ## Command line usage
 
@@ -70,3 +70,8 @@ CC CC; INT 3
 | Pattern frequency | The number of occurrences of a given pattern in a block. |
 | Frequency threshold | The boundary to define the statistically significant pattern frequency. |
 | Dictionary | A list of pattern-description pairs in a user-editable CSV file in which the pattern is looked up. |
+
+## Use cases
+
+* Quick understanding of the layout of the file
+* Finding redundancy in high-entropy data
