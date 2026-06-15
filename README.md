@@ -2,7 +2,7 @@
 
 ## What does FF-16 do?
 
-FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. It can aggregate results into chunks to reduce output length while retaining full coverage.
+FF-16 sequentially splits the file into blocks and finds frequently occurring 16-bit patterns within each block. It can summarize results into chunks to reduce output length while retaining full coverage.
 
 ## Command line usage
 
@@ -17,46 +17,6 @@ ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>]
   -t <1..255>     Freq threshold   (Default: 5)
 ```
 
-If no argument is provided, FF-16 displays the usage (above).
-
-For analysis, the target file is the only parameter that needs specifying, and the analysis will start with default values.
-
-Blocks per chunk (`-bpc`) and Chunks per file (`-cpf`) parameters are mutually exclusive. Use only one. If none is used, the results will be displayed for each block (verbose). Otherwise, the results will be aggregated into chunks (reduced verbosity).
-
-Block per chunk is 1 (`-bpc 1`). Result for each block. Verbose.
-```
-(<Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk><Blk>)
-```
-
-Block per chunk is not 1 (`-bpc` or `-cpf` is specified). Result for each chunk. Reduced verbosity.
-```
-([<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>][<Blk><Blk><Blk>])
-
-() File
-[] Chunk
-<> Block
-```
-If Max gap is not specified (`-g`), FF-16 will operate with `-g 31`. It means the search will involve any gaps between 0 and 31 between the first byte of the pattern and the second byte of the pattern. That is to find up to 32 bytes long structures.
-
-This is how a pattern looks like.
-
-```
-00 +(31) 00
-|    |   |
-|    |   Second byte of pattern
-|    Gap in bytes
-First byte of pattern
-```
-
-Frequency threshold means if the pattern occurs at least that many times as specified, it's considered statistically significant and will be ranked against the other patterns. What is the point of this? For example, if a given block is a high-entropy block, it controls the coincidental matches, i.e., the noise. But if the user wants to see coincidental redundancy in high-entropy data, they may lower the threshold. For another example, the user may decide they only want to see very strong signals and increase the threshold.
-
-Using a dictionary (`-d`) can be useful if the user wants to display a text next to the pattern. The dictionary file is a CSV file. Each line defines the pattern and the text to be displayed with semicolon between them. For example:
-```
-00 +(7) 00; QWORD
-00 +(3) 00; DWORD
-CC CC; INT 3
-```
-
 ## Understanding the results
 
 The `Offset` and `Size` columns indicate the data region.
@@ -65,7 +25,7 @@ The 'Ascii` column shows the text representation of the pattern or `.` if not pr
 The `Bpc` column indicates if the result is displayed for each block or aggregated into chunks.
 The 'Dict' column shows the corresponding text for the pattern from the dictionary.
 
-### Block `Bpc=1`
+### Block (`Bpc = 1`)
 
 The `Freq` column indicates the number of pattern hits in the data region (Max: 255).
 
@@ -82,7 +42,7 @@ Offset   Size     Pattern      Ascii Bpc Freq Dict
 00000800 00000100 00 00         |..|   1   34 -
 ```
 
-### Chunk `Bpc>1`
+### Chunk (`Bpc > 1`)
 
 The `Freq` column indicates the number of blocks with pattern hits. (Max: Bpc)
 
@@ -104,23 +64,23 @@ Offset   Size     Pattern      Ascii Bpc Freq Dict
 
 ### Simple
 
-The simplest possible analysis.
+The simplest way to run an analysis.
 
 ```
 go run ff-16.go .\sample.bin
 ```
 
-### Adjusted BPC
+### Using `-bpc`
 
-Adjusting BPC to aggregate results into chunks of 4 blocks. Use this if you want to control precision.
+Using the `-bpc` argument to set the number of blocks per chunk to `4` and control output granularity.
 
 ```
 go run ff-16.go .\sample.bin -bpc 4
 ```
 
-### Adjusted CPF
+### Using `-cpf`
 
-Adjusting CPF to compact results into 40 chunks. Use this if you want to control total output length.
+Using the `-cpf` argument to combine block results into `40` chunks and control total output length.
 
 ```
 go run ff-16.go .\sample.bin -cpf 40
@@ -128,10 +88,18 @@ go run ff-16.go .\sample.bin -cpf 40
 
 ### Dictionary usage
 
-Use a dictionary to print text for patterns.
+In the dictionary file (e.g. `mydict.csv`), each line contains a pattern and the text to be displayed for that pattern, separated by `;`.
 
 ```
-go run ff-16.go -d .\mydict.csv
+00 +(7) 00; QWORD
+00 +(3) 00; DWORD
+CC CC; INT 3
+```
+
+The dictionary file is specified with the `-d` argument.
+
+```
+go run ff-16.go .\sample.bin -d .\mydict.csv
 ```
 
 ## Terminologies
