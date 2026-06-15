@@ -59,7 +59,15 @@ CC CC; INT 3
 
 ## Understanding the results
 
-### Block
+The `Offset` and `Size` columns indicate the data region.
+The `Pattern` column shows the frequent pattern.
+The 'Ascii` column shows the text representation of the pattern or `.` if not printable.
+The `Bpc` column indicates if the result is displayed for each block or aggregated into chunks.
+The 'Dict' column shows the corresponding text for the pattern from the dictionary.
+
+### Block `Bpc=1`
+
+The `Freq` column indicates the number of pattern hits in the data region (Max: 255).
 
 ```
 Offset   Size     Pattern      Ascii Bpc Freq Dict
@@ -74,7 +82,9 @@ Offset   Size     Pattern      Ascii Bpc Freq Dict
 00000800 00000100 00 00         |..|   1   34 -
 ```
 
-### Chunk
+### Chunk `Bpc>1`
+
+The `Freq` column indicates the number of blocks with pattern hits. (Max: Bpc)
 
 ```
 Offset   Size     Pattern      Ascii Bpc Freq Dict
