@@ -19,15 +19,19 @@ ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>]
 
 ## Understanding the results
 
-The `Offset` and `Size` columns indicate the data region.
+The `Offset` and `Size` columns indicate the data region in the file.
+
 The `Pattern` column shows the frequent pattern.
-The 'Ascii` column shows the text representation of the pattern or `.` if not printable.
-The `Bpc` column indicates if the result is displayed for each block or aggregated into chunks.
-The 'Dict' column shows the corresponding text for the pattern from the dictionary.
+
+The `Ascii` column shows the text representation of the pattern, or `.` if not printable.
+
+The `Bpc` column indicates whether the result is displayed per block (`Bpc = 1`) or summarized into chunks (`Bpc > 1`).
+
+The `Dict` column shows the corresponding text for the pattern from the dictionary.
 
 ### Block (`Bpc = 1`)
 
-The `Freq` column indicates the number of pattern hits in the data region (Max: 255).
+The `Freq` column indicates the number of pattern hits in the data region. The minimum value is as per defined by Freq threshold (`-t`), and the maximum value is 255.
 
 ```
 Offset   Size     Pattern      Ascii Bpc Freq Dict
@@ -44,7 +48,7 @@ Offset   Size     Pattern      Ascii Bpc Freq Dict
 
 ### Chunk (`Bpc > 1`)
 
-The `Freq` column indicates the number of blocks with pattern hits. (Max: Bpc)
+The `Freq` column indicates how many blocks in a chunk contain the pattern. The maximum value is `Bpc`.
 
 ```
 Offset   Size     Pattern      Ascii Bpc Freq Dict
@@ -109,12 +113,12 @@ go run ff-16.go .\sample.bin -d .\mydict.csv
 | Block | A block consists of a sequence of bytes. A block is always 256 bytes in size, except for the last block, if the file size is not a multiple of 256. |
 | Chunk | A chunk consists of one block or a sequence of blocks. |
 | Pattern | A pattern is a frequent two-byte data sequence in a block, with or without a gap between the bytes. |
-| Gaps | The number of bytes to skip between the two bytes in the pattern. |
-| Block Per Chunk (BPC) | The number of blocks in a chunk. |
-| Chunk Per File (CPF) | The number of chunks in the file. |
+| Gap | The number of bytes to skip between the two bytes in the pattern. |
+| Blocks Per Chunk (BPC) | The number of blocks in a chunk. |
+| Chunks Per File (CPF) | The number of chunks in the file. |
 | Pattern frequency | The number of occurrences of a given pattern in a block. |
-| Frequency threshold | The boundary to define the statistically significant pattern frequency. |
-| Dictionary | A list of pattern-description pairs in a user-editable CSV file in which the pattern is looked up. |
+| Frequency threshold | The threshold defines the minimum statistically significant pattern frequency. |
+| Dictionary | A list of pattern-description pairs in a user-editable CSV file used for pattern lookup. |
 
 ## Use cases
 
