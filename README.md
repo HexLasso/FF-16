@@ -60,20 +60,69 @@ CC CC; INT 3
 ## Understanding the results
 
 ### Block
-bpc=1
+
+```
+Offset   Size     Pattern      Ascii Bpc Freq Dict
+00000000 00000100 00 00         |..|   1   77 -
+00000100 00000100 00 00         |..|   1  127 -
+00000200 00000100 00 00         |..|   1  165 -
+00000300 00000100 00 00         |..|   1  255 -
+00000400 00000100 00 00         |..|   1   13 -
+00000500 00000100 01 64         |.d|   1   10 -
+00000600 00000100 CC CC         |..|   1   33 -
+00000700 00000100 00 00         |..|   1   22 -
+00000800 00000100 00 00         |..|   1   34 -
+```
 
 ### Chunk
-bpc>1
+
+```
+Offset   Size     Pattern      Ascii Bpc Freq Dict
+00000000 00002D00 00 00         |..|  45   13 -
+00002D00 00002D00 CC CC         |..|  45   33 -
+00005A00 00002D00 00 00         |..|  45   19 -
+00008700 00002D00 00 +(23) 00   |..|  45   20 -
+0000B400 00002D00 00 +(3) 00    |..|  45   24 -
+0000E100 00002D00 00 +(3) 00    |..|  45   35 -
+00010E00 00002D00 00 +(3) 00    |..|  45   34 -
+00013B00 00002D00 00 +(3) 00    |..|  45   23 -
+00016800 00002D00 FF +(27) FF   |..|  45   17 -
+00019500 00002D00 00 +(3) 00    |..|  45   23 -
+```
 
 ## Examples
 
 ### Simple
 
+The simplest possible analysis.
+
+```
+go run ff-16.go .\sample.bin
+```
+
 ### Adjusted BPC
+
+Adjusting BPC to aggregate results into chunks of 4 blocks. Use this if you want to control precision.
+
+```
+go run ff-16.go .\sample.bin -bpc 4
+```
 
 ### Adjusted CPF
 
+Adjusting CPF to compact results into 40 chunks. Use this if you want to control total output length.
+
+```
+go run ff-16.go .\sample.bin -cpf 40
+```
+
 ### Dictionary usage
+
+Use a dictionary to print text for patterns.
+
+```
+go run ff-16.go -d .\mydict.csv
+```
 
 ## Terminologies
 
