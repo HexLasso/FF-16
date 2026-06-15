@@ -31,7 +31,7 @@ The `Dict` column shows the corresponding text for the pattern from the dictiona
 
 ### Block (`Bpc = 1`)
 
-The `Freq` column indicates the number of pattern hits in the data region. The minimum value is as per defined by Freq threshold (`-t`), and the maximum value is 255.
+The `Freq` column indicates the number of pattern hits in the data region. The minimum value is as per defined by Freq threshold (`-t`), and the maximum value is 255. Example output:
 
 ```
 Offset   Size     Pattern      Ascii Bpc Freq Dict
@@ -48,7 +48,7 @@ Offset   Size     Pattern      Ascii Bpc Freq Dict
 
 ### Chunk (`Bpc > 1`)
 
-The `Freq` column indicates how many blocks in a chunk contain the pattern. The maximum value is `Bpc`.
+The `Freq` column indicates how many blocks in a chunk contain the pattern. The maximum value is `Bpc`. Example output:
 
 ```
 Offset   Size     Pattern      Ascii Bpc Freq Dict
