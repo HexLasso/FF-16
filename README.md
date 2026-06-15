@@ -2,7 +2,7 @@
 
 ## What does FF-16 do?
 
-FF-16 is a static analysis tool that finds frequently occurring local 16-bit patterns across the entire file. It can help to understand file layout and locate structures from frequent patterns.
+FF-16 is a static analysis tool that finds frequently occurring local 16-bit patterns across the entire file. It can help to locate structures from frequent patterns and understand file layout.
 
 ## Command line usage
 
