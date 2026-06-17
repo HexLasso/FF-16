@@ -1,0 +1,77 @@
+#Sample dictionary
+#https://github.com/HexLasso/FF-16
+
+#Text
+0D 0A;       NewLine
+30 30;       Decimal
+20 20;       Space
+
+#Internet
+3D 22;       StrAssign
+3E 3C;       MarkupTag
+
+#PDF
+30 +(19) 30; PdfXref
+
+#Most common English bigrams
+#https://en.wikipedia.org/wiki/Bigram
+74 68;       Eng
+68 65;       Eng
+69 6E;       Eng
+65 72;       Eng
+61 6E;       Eng
+72 65;       Eng
+6F 6E;       Eng
+61 74;       Eng
+65 6E;       Eng
+6E 64;       Eng
+74 69;       Eng
+65 73;       Eng
+6F 72;       Eng
+74 65;       Eng
+6F 66;       Eng
+65 64;       Eng
+69 73;       Eng
+69 74;       Eng
+61 6C;       Eng
+61 72;       Eng
+73 74;       Eng
+74 6F;       Eng
+6E 74;       Eng
+6E 67;       Eng
+73 65;       Eng
+68 61;       Eng
+61 73;       Eng
+6F 75;       Eng
+69 6F;       Eng
+6C 65;       Eng
+76 65;       Eng
+63 6F;       Eng
+6D 65;       Eng
+64 65;       Eng
+68 69;       Eng
+72 69;       Eng
+72 6F;       Eng
+69 63;       Eng
+6E 65;       Eng
+65 61;       Eng
+72 61;       Eng
+63 65;       Eng
+
+#Structure
+00 +(1) 00;  Word|Unicode
+00 +(3) 00;  Dword
+00 +(7) 00;  Qword
+
+#x86
+CC CC;       Int3
+48 8B;       Mov
+48 89;       Mov
+41 8B;       Mov
+
+#Windows
+40 00;       ImageBase
+
+#Binary
+00 00;       Null|Align
+FF FF;       Sub0|Align
