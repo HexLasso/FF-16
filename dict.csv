@@ -59,19 +59,44 @@
 63 65;       Eng
 
 #Structure
-00 +(1) 00;  Word|Unicode
-00 +(3) 00;  Dword
-00 +(7) 00;  Qword
+00 +(1) 00;  Value16|Unicode
+00 +(2) 00;  Value24
+00 +(3) 00;  Value32
+00 +(7) 00;  Value64
 
 #x86
-CC CC;       Int3
-48 8B;       Mov
-48 89;       Mov
+0F 84;       Jz
+0F 85;       Jnz
+33 C0;       Xor
 41 8B;       Mov
+48 83;       Dec
+48 89;       Mov
+48 8B;       Mov
+55 8B;       Prologue
+5D C3;       Epilogue
+83 F8;       Cmp
+83 FF;       Cmp
+85 C0;       Test
+89 45;       Mov
+8B 45;       Mov
+90 90;       Nop
+E8 +(3) 00;  Call
+E8 +(3) FF;  Call
+E9 +(3) 00;  Jmp
+E9 +(3) FF;  Jmp
+CC CC;       Int3
+FF 15;       Call
+FF 25;       Jmp
+FF 75;       Push
+
+#MSIL
+28 +(2) 00;  IL.call
+6F +(2) 00;  IL.callvirt
+72 +(2) 00;  IL.ldstr
 
 #Windows
 40 00;       ImageBase
 
 #Binary
 00 00;       Null|Align
-FF FF;       Sub0|Align
+FF FF;       Negative|Align
