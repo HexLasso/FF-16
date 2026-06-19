@@ -2,92 +2,99 @@
 #https://github.com/HexLasso/FF-16
 
 #Text
-0D 0A;       NewLine
-30 30;       Decimal
-20 20;       Space
+0D 0A;       Text.NewLine|CRLF
+30 30;       Text.Decimal
+20 20;       Text.Space
 
 #Internet
-3D 22;       StrAssign
-3E 3C;       MarkupTag
+3D 22;       Text.StrAssign
+3D 3D;       Text.EqualityCheck
+3E 3C;       Text.MarkupTag
+25 32;       Text.PercentEncoding
 
 #PDF
-30 +(19) 30; PdfXref
+30 +(19) 30; Pdf.XrefTable
 
 #Most common English bigrams
 #https://en.wikipedia.org/wiki/Bigram
-74 68;       Eng
-68 65;       Eng
-69 6E;       Eng
-65 72;       Eng
-61 6E;       Eng
-72 65;       Eng
-6F 6E;       Eng
-61 74;       Eng
-65 6E;       Eng
-6E 64;       Eng
-74 69;       Eng
-65 73;       Eng
-6F 72;       Eng
-74 65;       Eng
-6F 66;       Eng
-65 64;       Eng
-69 73;       Eng
-69 74;       Eng
-61 6C;       Eng
-61 72;       Eng
-73 74;       Eng
-74 6F;       Eng
-6E 74;       Eng
-6E 67;       Eng
-73 65;       Eng
-68 61;       Eng
-61 73;       Eng
-6F 75;       Eng
-69 6F;       Eng
-6C 65;       Eng
-76 65;       Eng
-63 6F;       Eng
-6D 65;       Eng
-64 65;       Eng
-68 69;       Eng
-72 69;       Eng
-72 6F;       Eng
-69 63;       Eng
-6E 65;       Eng
-65 61;       Eng
-72 61;       Eng
-63 65;       Eng
+74 68;       Text.Eng
+68 65;       Text.Eng
+69 6E;       Text.Eng
+65 72;       Text.Eng
+61 6E;       Text.Eng
+72 65;       Text.Eng
+6F 6E;       Text.Eng
+61 74;       Text.Eng
+65 6E;       Text.Eng
+6E 64;       Text.Eng
+74 69;       Text.Eng
+65 73;       Text.Eng
+6F 72;       Text.Eng
+74 65;       Text.Eng
+6F 66;       Text.Eng
+65 64;       Text.Eng
+69 73;       Text.Eng
+69 74;       Text.Eng
+61 6C;       Text.Eng
+61 72;       Text.Eng
+73 74;       Text.Eng
+74 6F;       Text.Eng
+6E 74;       Text.Eng
+6E 67;       Text.Eng
+73 65;       Text.Eng
+68 61;       Text.Eng
+61 73;       Text.Eng
+6F 75;       Text.Eng
+69 6F;       Text.Eng
+6C 65;       Text.Eng
+76 65;       Text.Eng
+63 6F;       Text.Eng
+6D 65;       Text.Eng
+64 65;       Text.Eng
+68 69;       Text.Eng
+72 69;       Text.Eng
+72 6F;       Text.Eng
+69 63;       Text.Eng
+6E 65;       Text.Eng
+65 61;       Text.Eng
+72 61;       Text.Eng
+63 65;       Text.Eng
 
 #Structure
-00 +(1) 00;  Value16|Unicode
-00 +(2) 00;  Value24
-00 +(3) 00;  Value32
-00 +(7) 00;  Value64
+00 +(1) 00;  Stride2|Word|Unicode
+00 +(2) 00;  Stride3|24-bit
+00 +(3) 00;  Stride4|Dword
+00 +(7) 00;  Stride8|Qword
 
 #x86
-0F 84;       Jz
-0F 85;       Jnz
-33 C0;       Xor
-41 8B;       Mov
-48 83;       Dec
-48 89;       Mov
-48 8B;       Mov
-55 8B;       Prologue
-5D C3;       Epilogue
-83 F8;       Cmp
-83 FF;       Cmp
-85 C0;       Test
-89 45;       Mov
-8B 45;       Mov
-90 90;       Nop
-E8 +(3) 00;  Call
-E8 +(3) FF;  Call
-E9 +(3) 00;  Jmp
-E9 +(3) FF;  Jmp
-CC CC;       Int3
-FF 15;       Call
-FF 25;       Jmp
-FF 75;       Push
+0F 84;       x86.jz
+0F 85;       x86.jnz
+33 C0;       x86.xor
+41 8B;       x86.mov
+48 83;       x86.dec
+48 89;       x86.mov
+48 8B;       x86.mov
+48 +(3) 48;  x86.prefix
+48 +(2) 24;  x86.prefix
+48 8D;       x86.lea
+55 8B;       x86.prologue
+5D C3;       x86.epilogue
+83 F8;       x86.cmp
+83 FF;       x86.cmp
+85 C0;       x86.test
+89 45;       x86.mov
+89 +(1) 24;  x86.mov
+8B 45;       x86.mov
+8B +(1) 8B;  x86.mov
+90 90;       x86.nop|align
+E8 +(3) 00;  x86.call
+E8 +(3) FF;  x86.call
+E9 +(3) 00;  x86.jmp
+E9 +(3) FF;  x86.jmp
+CC CC;       x86.int3|align|debug
+FF 15;       x86.call
+FF 25;       x86.jmp
+FF 75;       x86.push
 
 #MSIL
 28 +(2) 00;  IL.call
@@ -98,5 +105,5 @@ FF 75;       Push
 40 00;       ImageBase
 
 #Binary
-00 00;       Null|Align
-FF FF;       Negative|Align
+00 00;       null|align|sparse
+FF FF;       negative|align
