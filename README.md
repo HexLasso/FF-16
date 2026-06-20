@@ -7,7 +7,7 @@ FF-16 is a static analysis tool that finds frequently occurring local 16-bit pat
 ## Command line usage
 
 ```
-ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>] [-t <1..255>]
+ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>] [-t <1..255>] [-z <0..2>]
 
   <filename>      Target file
   -d <filename>   Dictionary file  (Default: dict.csv)
@@ -15,6 +15,7 @@ ff-16 [filename] [-d <filename>] [<-bpc <1..256>|-cpf <1..65536>>] [-g <0..127>]
   -cpf <1..65536> Chunks per file  (Default: not specified)
   -g <0..127>     Max gaps         (Default: 31)
   -t <1..255>     Freq threshold   (Default: 5)
+  -z <0..2>       Byte 00 filter   (Default: 0)
 ```
 
 ## Understanding the results
@@ -118,6 +119,7 @@ go run ff-16.go .\sample.bin -d .\mydict.csv
 | Chunks Per File (CPF) | The number of chunks in the file. |
 | Pattern frequency | The number of occurrences of a given pattern in a block. |
 | Frequency threshold | The threshold defines the minimum statistically significant pattern frequency. |
+| Zero filter | Byte 00 filter controls whether patterns containing 0x00 bytes are allowed. |
 | Dictionary | A list of pattern-description pairs in a user-editable CSV file used for pattern lookup. |
 
 ## Use cases
