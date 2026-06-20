@@ -12,16 +12,24 @@ import (
 )
 
 // Last update
-const LastUpdate = "04-Dec-2025"
+const LastUpdate = "20-Jun-2026"
 
 // Block size is 256 bytes
 const BlockSize = 256
+
+// Zero filter values
+const (
+	ZeroFilterNone   = 0 // No filtering
+	ZeroFilterBoth   = 1 // Exclude 00 00 patterns
+	ZeroFilterEither = 2 // Exclude patterns containing 00
+)
 
 // Default values for cmd parameters
 const DefDictFileName = "dict.csv"
 const DefBlocksPerChunk = 1
 const DefMaxGap = 31
 const DefThreshold = 5
+const DefZeroFilter = ZeroFilterNone
 
 // Operation ranges
 const BlocksPerChunkLo = 1
@@ -32,6 +40,8 @@ const MaxGapLo = 0
 const MaxGapHi = 127
 const ThresholdLo = 1
 const ThresholdHi = 255
+const ZeroFilterLo = 0
+const ZeroFilterHi = 2
 const FileSizeLo = 0
 const FileSizeHi = BlocksPerChunkHi * ChunksPerFileHi
 const DictColumnCount = 2
@@ -78,14 +88,15 @@ func ToPrintable(first byte, second byte) string {
 
 func Help() {
 	fmt.Printf("FF-16 searches for frequent 16-bit patterns in file. Last update: %s\n\n", LastUpdate)
-	fmt.Printf("ff-16 [filename] [-d <filename>] [<-bpc <%d..%d>|-cpf <%d..%d>>] [-g <%d..%d>] [-t <%d..%d>]\n\n",
-		BlocksPerChunkLo, BlocksPerChunkHi, ChunksPerFileLo, ChunksPerFileHi, MaxGapLo, MaxGapHi, ThresholdLo, ThresholdHi)
+	fmt.Printf("ff-16 [filename] [-d <filename>] [<-bpc <%d..%d>|-cpf <%d..%d>>] [-g <%d..%d>] [-t <%d..%d>] [-z <%d..%d>]\n\n",
+		BlocksPerChunkLo, BlocksPerChunkHi, ChunksPerFileLo, ChunksPerFileHi, MaxGapLo, MaxGapHi, ThresholdLo, ThresholdHi, ZeroFilterLo, ZeroFilterHi)
 	fmt.Printf("  <filename>      Target file\n")
 	fmt.Printf("  -d <filename>   Dictionary file  (Default: %s)\n", DefDictFileName)
 	fmt.Printf("  -bpc <%d..%d>   Blocks per chunk (Default: %d)\n", BlocksPerChunkLo, BlocksPerChunkHi, DefBlocksPerChunk)
 	fmt.Printf("  -cpf <%d..%d> Chunks per file  (Default: not specified)\n", ChunksPerFileLo, ChunksPerFileHi)
 	fmt.Printf("  -g <%d..%d>     Max gaps         (Default: %d)\n", MaxGapLo, MaxGapHi, DefMaxGap)
-	fmt.Printf("  -t <%d..%d>     Freq threshold   (Default: %d)\n\n", ThresholdLo, ThresholdHi, DefThreshold)
+	fmt.Printf("  -t <%d..%d>     Freq threshold   (Default: %d)\n", ThresholdLo, ThresholdHi, DefThreshold)
+	fmt.Printf("  -z <%d..%d>       Byte 00 filter   (Default: %d)\n\n", ZeroFilterLo, ZeroFilterHi, DefZeroFilter)
 }
 
 func main() {
@@ -102,6 +113,7 @@ func main() {
 	chunksPerFile := 0
 	gap := DefMaxGap
 	threshold := DefThreshold
+	zero := DefZeroFilter
 	bpcSet := false
 	cpfSet := false
 	missingValue := false
@@ -167,6 +179,19 @@ func main() {
 					invalidValue = true
 				}
 				if IsOutOfRange(threshold, ThresholdLo, ThresholdHi) {
+					outOfRangeValue = true
+				}
+				i++
+			}
+		} else if strings.EqualFold(arg, "-z") {
+			if len(os.Args) <= i+1 {
+				missingValue = true
+			} else {
+				zero, err = strconv.Atoi(os.Args[i+1])
+				if err != nil {
+					invalidValue = true
+				}
+				if IsOutOfRange(zero, ZeroFilterLo, ZeroFilterHi) {
 					outOfRangeValue = true
 				}
 				i++
@@ -299,6 +324,17 @@ func main() {
 		// Build pattern frequency table for the block
 		for gapIdx := 0; gapIdx <= gap; gapIdx++ {
 			for bufIdx := 0; bufIdx < bytesRead-1-GapTable[gapIdx]; bufIdx++ {
+				if zero == ZeroFilterBoth {
+					// Exclude 00 00 patterns
+					if (blockBuf[bufIdx] == 0x00) && (blockBuf[bufIdx+GapTable[gapIdx]+1] == 0x00) {
+						continue
+					}
+				} else if zero == ZeroFilterEither {
+					// Exclude patterns containing 00
+					if (blockBuf[bufIdx] == 0x00) || (blockBuf[bufIdx+GapTable[gapIdx]+1] == 0x00) {
+						continue
+					}
+				}
 				key := fmt.Sprintf("%02x +(%d) %02x \n", blockBuf[bufIdx], GapTable[gapIdx], blockBuf[bufIdx+GapTable[gapIdx]+1])
 				hits := blockFreqTable[key].Hits + 1
 				blockFreqTable[key] = PatternInfo{
