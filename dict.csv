@@ -69,29 +69,37 @@
 #x86
 0F 84;       x86.jz
 0F 85;       x86.jnz
+0F AF;       x86.imul
+0F B6;       x86.movzx
+0F +(3) 0F;  x86.prefix
 33 C0;       x86.xor
 41 8B;       x86.mov
 48 83;       x86.dec
 48 89;       x86.mov
 48 8B;       x86.mov
-48 +(3) 48;  x86.prefix
-48 +(2) 24;  x86.prefix
 48 8D;       x86.lea
+48 +(2) 24;  x86.prefix
+48 +(3) 48;  x86.prefix
+48 +(4) 48;  x86.prefix
 55 8B;       x86.prologue
 5D C3;       x86.epilogue
 83 F8;       x86.cmp
 83 FF;       x86.cmp
 85 C0;       x86.test
 89 45;       x86.mov
+89 4D;       x86.mov
 89 +(1) 24;  x86.mov
 8B 45;       x86.mov
+8B +(1) 48;  x86.mov
 8B +(1) 8B;  x86.mov
+8B +(1) C1;  x86.mov
+8B +(6) 8B;  x86.mov
 90 90;       x86.nop|align
 E8 +(3) 00;  x86.call
 E8 +(3) FF;  x86.call
 E9 +(3) 00;  x86.jmp
 E9 +(3) FF;  x86.jmp
-CC CC;       x86.int3|align|debug
+CC CC;       x86.int3|align
 FF 15;       x86.call
 FF 25;       x86.jmp
 FF 75;       x86.push
