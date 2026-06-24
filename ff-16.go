@@ -347,7 +347,7 @@ func main() {
 
 		// Build pattern frequency table for the block
 		for gapIdx := minGap; gapIdx <= gap; gapIdx++ {
-			for bufIdx := 1; bufIdx < bytesRead-1-GapTable[gapIdx]; bufIdx++ {
+			for bufIdx := 0; bufIdx < bytesRead-1-GapTable[gapIdx]; bufIdx++ {
 				if zero == ZeroFilterBoth {
 					// Exclude 00 00 patterns
 					if (blockBuf[bufIdx] == 0x00) && (blockBuf[bufIdx+GapTable[gapIdx]+1] == 0x00) {
